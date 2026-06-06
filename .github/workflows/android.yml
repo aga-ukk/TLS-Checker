@@ -18,15 +18,16 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle 8.1.1
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '8.1.1'
+    - name: Force Install Gradle 8.1.1 Manually
+      run: |
+        wget -q https://services.gradle.org/distributions/gradle-8.1.1-bin.zip
+        sudo unzip -q gradle-8.1.1-bin.zip -d /opt
+        echo "/opt/gradle-8.1.1/bin" >> $GITHUB_PATH
 
-    - name: Build APK Directly
+    - name: Build APK Directly with Forced Version
       run: gradle assembleDebug
 
-    - name: Upload APK
+    - name: Upload APK Result
       uses: actions/upload-artifact@v4
       with:
         name: TLS-Checker-APK
