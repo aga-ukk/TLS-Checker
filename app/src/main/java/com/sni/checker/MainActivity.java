@@ -83,29 +83,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 }
-                if (!host.isEmpty()) {
-                    checkTLS(host);
-                } else {
-                    txtResult.setText("Por favor, ingresa un dominio válido.");
-                }
-            }
-        });
-    }
-
-    private void checkTLS(String host) {
-        txtResult.setText("Conectando con el host...");
-        String url = "https://" + host;
-
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, final IOException e) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
                         txtResult.setText("Error de red / SNI bloqueado:\n" + e.getMessage());
                     }
                 });
