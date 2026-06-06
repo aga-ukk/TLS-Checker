@@ -65,6 +65,55 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, final Response response) throws IOException {
                 final String protocol = response.handshake() != null ? 
+                        response.handshake().tlsVersion().javaName() : "Desconocido";
+                final String cipher = response.handshake() != null ? 
+                        response.handshake().cipherSuite().javaName() : "Desconocido";
+                final int code = response.code();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtResult.setText("¡Conexión Exitosa!\n\n" +
+                                "Código de Estado: " + code + "\n" +
+                                "Versión de TLS: " + protocol + "\n" +
+                                "Cifrado: " + cipher);
+                    }
+                });
+            }
+        });
+    }
+}
+                if (!host.isEmpty()) {
+                    checkTLS(host);
+                } else {
+                    txtResult.setText("Por favor, ingresa un dominio válido.");
+                }
+            }
+        });
+    }
+
+    private void checkTLS(String host) {
+        txtResult.setText("Conectando con el host...");
+        String url = "https://" + host;
+
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, final IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtResult.setText("Error de red / SNI bloqueado:\n" + e.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                final String protocol = response.handshake() != null ? 
                         response.handshake().tlsVersion().name() : "Desconocido";
                 final String cipher = response.handshake() != null ? 
                         response.handshake().cipherSuite().name() : "Desconocido";
