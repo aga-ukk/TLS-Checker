@@ -1,14 +1,17 @@
 package com.sni.checker;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.IOException;
+
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Handshake;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -30,21 +33,22 @@ public class MainActivity extends AppCompatActivity {
 
         client = new OkHttpClient();
 
-        btnCheck.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String host = editHost.getText().toString().trim();
-                if (!host.isEmpty()) {
-                    checkTLS(host);
-                } else {
-                    txtResult.setText("Por favor, ingresa un dominio válido.");
-                }
+        btnCheck.setOnClickListener(v -> {
+
+            String host = editHost.getText().toString().trim();
+
+            if (!host.isEmpty()) {
+                checkTLS(host);
+            } else {
+                txtResult.setText("Ingresa un dominio válido");
             }
         });
     }
 
     private void checkTLS(String host) {
-        txtResult.setText("Conectando con el host...");
+
+        txtResult.setText("Conectando...");
+
         String url = "https://" + host;
 
         Request request = new Request.Builder()
@@ -52,33 +56,50 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
+
             @Override
-            public void onFailure(Call call, final IOException e) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        txtResult.setText("Error de red / SNI bloqueado:\n" + e.getMessage());
-                    }
-                });
+            public void onFailure(Call call, IOException e) {
+
+                runOnUiThread(() ->
+                        txtResult.setText(
+                                "Error de conexión:\n" + e.getMessage()
+                        )
+                );
             }
 
             @Override
-            public void onResponse(Call call, final Response response) throws IOException {
-                final String protocol = response.handshake() != null ? 
-                        response.handshake().tlsVersion().javaName() : "Desconocido";
-                final String cipher = response.handshake() != null ? 
-                        response.handshake().cipherSuite().javaName() : "Desconocido";
-                final int code = response.code();
+            public void onResponse(Call call, Response response) throws IOException {
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        txtResult.setText("¡Conexión Exitosa!\n\n" +
-                                "Código de Estado: " + code + "\n" +
-                                "Versión de TLS: " + protocol + "\n" +
-                                "Cifrado: " + cipher);
-                    }
-                });
+                Handshake handshake = response.handshake();
+
+                String tlsVersion = "Desconocido";
+                String cipher = "Desconocido";
+
+                if (handshake != null) {
+                    tlsVersion = handshake.tlsVersion().javaName();
+                    cipher = handshake.cipherSuite().javaName();
+                }
+
+                int code = response.code();
+
+                String finalTlsVersion = tlsVersion;
+                String finalCipher = cipher;
+
+                runOnUiThread(() ->
+
+                        txtResult.setText(
+                                "Conexión exitosa\n\n" +
+                                "Código: " + code + "\n" +
+                                "TLS: " + finalTlsVersion + "\n" +
+                                "Cipher: " + finalCipher
+                        )
+                );
+
+                response.close();
+            }
+        });
+    }
+}                });
             }
         });
     }
